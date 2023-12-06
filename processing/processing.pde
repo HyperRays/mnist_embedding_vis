@@ -143,6 +143,8 @@ void drawOverlay() {
     PVector v = avg[n].copy();
     v.mult(dim);
     overlay.point(v.x,v.y,v.z);
+    overlay.fill(255);
+    overlay.text(str(n),v.x,v.y, v.z);
   }
   overlay.endDraw();
 }

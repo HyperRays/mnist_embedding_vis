@@ -102,10 +102,9 @@ void draw() {
 
 void setTransform(PGraphics gr){
   gr.translate(width/2,height/2);
-  gr.scale(1,-1,1); // so Y is up, which makes more sense in plotting
-  gr.rotateY((float(mouseX)/float(width))*PI*1.75);
-  
-  gr.rotateZ((float(mouseY)/float(height))*PI*1.75);
+  gr.scale(1,1,1); // so Y is up, which makes more sense in plotting
+  gr.rotateY((float(mouseX)/float(width))*TAU * 1.5);
+  gr.rotateX((float(mouseY)/float(height))*TAU * 1.5);
 }
 
 
@@ -144,6 +143,7 @@ void drawOverlay() {
     v.mult(dim);
     overlay.point(v.x,v.y,v.z);
     overlay.fill(255);
+    overlay.textSize(64);  
     overlay.text(str(n),v.x,v.y, v.z);
   }
   overlay.endDraw();

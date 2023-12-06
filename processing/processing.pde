@@ -1,10 +1,18 @@
 import processing.opengl.*;
  
+ 
+color defaultColor = #66bcd9;
 ArrayList<Embed> embeds = new ArrayList<Embed>();
 int dim = 250;
 
+PGraphics box;
+PGraphics points;
+PGraphics overlay;
+
+
 String path = "./data/embedding_examples6.csv";
-int threshold = 50000;
+int threshold = 60000;
+color[] colorPalette = {#76cf45, #00c556, #00ba6f, #00ac8b, #009da8, #008cc4, #007bd9, #0068e4, #0052e3, #0037d3};
 
 class Embed{
   int target;
@@ -14,13 +22,33 @@ class Embed{
     target = t;
     embedding = e;
   }
+  
+  color mapColor() {
+    return colorPalette[this.target];
+  }
 }
 
 Table table;
+PVector[] avg = new PVector[10];
 
 void setup() {
   
   size(500,500,OPENGL);
+  points = createGraphics(width, height, P3D);
+  box = createGraphics(width, height, P3D);
+  overlay = createGraphics(width, height, P3D);
+  dim = min(width,height)/2;
+  
+  box.smooth(8);
+  
+  box.beginDraw();
+  box.noFill();
+  box.strokeWeight(3);
+  box.stroke(defaultColor);
+  box.endDraw();
+
+  
+  int[] count = new int[10];
 
   table = loadTable(path, "header");
 
@@ -39,32 +67,82 @@ void setup() {
     if(i > threshold){
        break; 
     }
-    //print("target: " + embed.target + " " + "embedding: " + embed.embedding + "\n");
   }
+  
+  for (int n = 0; n < 10; n++) {
+    avg[n] = new PVector(0,0,0);
+    count[n] = 0;
+  }
+  
+  for (Embed embed: embeds) {
+    avg[embed.target].add(embed.embedding);
+    count[embed.target] += 1;
+  }
+  
+  for (int n = 0; n < 10; n++) {
+    avg[n].div(count[n]);
+  }
+  
 
 }
 
 void draw() {
-  background(0);
-  translate(width/2,height/2);
-  scale(1,-1,1); // so Y is up, which makes more sense in plotting
-  rotateY((float(mouseX)/float(width))*PI*1.75);
   
-  rotateZ((float(mouseY)/float(height))*PI*1.75);
+  drawBox();
+  image(box, 0, 0);
   
-  dim = min(width,height)/2;
+  drawPoints();
+  image(points, 0, 0);
   
-  noFill();
-  strokeWeight(1);
-  box(dim);
+  drawOverlay();
+  image(overlay, 0, 0);
+  
 
-  translate(-dim/2,-dim/2,-dim/2);
-  for (Embed embed: embeds) {
-    PVector v = embed.embedding.copy();
+}
+
+void setTransform(PGraphics gr){
+  gr.translate(width/2,height/2);
+  gr.scale(1,-1,1); // so Y is up, which makes more sense in plotting
+  gr.rotateY((float(mouseX)/float(width))*PI*1.75);
+  
+  gr.rotateZ((float(mouseY)/float(height))*PI*1.75);
+}
+
+
+void drawPoints() {
+    points.beginDraw();
+    points.clear();
+    setTransform(points);
+    points.translate(-dim/2,-dim/2,-dim/2);
+    points.strokeWeight(2);
+    for (Embed embed: embeds) {
+      PVector v = embed.embedding.copy();
+      v.mult(dim);
+      points.stroke(embed.mapColor());
+      points.point(v.x,v.y,v.z);
+    }
+    points.endDraw();
+}
+
+void drawBox() {
+  box.beginDraw();
+  box.background(0);
+  setTransform(box);
+  box.box(dim);
+  box.endDraw();
+}
+
+void drawOverlay() {
+  overlay.beginDraw();
+  overlay.clear();
+  setTransform(overlay);
+  overlay.translate(-dim/2,-dim/2,-dim/2);
+  overlay.stroke(255);
+  overlay.strokeWeight(10);
+  for (int n = 0; n < 10; n++) {
+    PVector v = avg[n].copy();
     v.mult(dim);
-    float n = ((float(embed.target)+1.) / 10.0)*50.;
-    stroke(v.x+n,v.y+n,v.z+n);
-    strokeWeight(5);
-    point(v.x,v.y,v.z);
+    overlay.point(v.x,v.y,v.z);
   }
+  overlay.endDraw();
 }
